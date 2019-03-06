@@ -1,9 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"crypto/sha256"
-	"strconv"
 	"time"
 )
 
@@ -14,6 +11,7 @@ type Block struct {
 	Data          []byte
 	PrevBlockHash []byte
 	Hash          []byte
+	Nonce         int
 }
 
 // NewBlock creates a block with block data and previous block hash and returns it.
@@ -23,8 +21,13 @@ func NewBlock(data string, prevBlockHash []byte) *Block {
 		Data:          []byte(data),
 		PrevBlockHash: prevBlockHash,
 		Hash:          []byte{}, // hash will be calculated block itself.
+		Nonce:         0,
 	}
-	block.SetHash()
+	pow := NewProofOfWork(block)
+	nonce, hash := pow.Run()
+
+	block.Hash = hash[:]
+	block.Nonce = nonce
 
 	return block
 }
