@@ -34,7 +34,6 @@ func NewBlockChain() *Blockchain {
 	if err != nil {
 		log.Panic(err)
 	}
-	defer db.Close()
 
 	err = db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
@@ -63,7 +62,7 @@ func NewBlockChain() *Blockchain {
 		} else {
 			tip = b.Get([]byte("l"))
 		}
-		
+
 		return nil
 	})
 
