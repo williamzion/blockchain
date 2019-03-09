@@ -1,15 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	bolt "go.etcd.io/bbolt"
 )
 
 const (
-	dbFile       = "blockchain.db"
-	blocksBucket = "blocks"
+	dbFile              = "blockchain.db"
+	blocksBucket        = "blocks"
+	genesisCoinbaseData = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks"
 )
 
 // Blockchain represents a chain of blocks.
@@ -89,8 +89,9 @@ func (i *BlockchainIterator) Next() *Block {
 }
 
 // NewBlockChain returns a new blockchain with genesis block.
+// It takes an address which will receive the reward for mining the genesis block.
 // A db connection included in the returned value is intended to be reused.
-func NewBlockChain() *Blockchain {
+func NewBlockChain(address string) *Blockchain {
 	var tip []byte
 	db, err := bolt.Open(dbFile, 0600, nil)
 	if err != nil {
@@ -98,35 +99,32 @@ func NewBlockChain() *Blockchain {
 	}
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(blocksBucket))
+		cbtx := NewCoinbaseTX(address, genesisCoinbaseData)
+		genesis := NewGenesisBlock(cbtx)
 
-		if b == nil {
-			fmt.Println("No existing block found. Creating a new one...")
-			genesis := NewGenesisBlock()
-
-			b, err := tx.CreateBucket([]byte(blocksBucket))
-			if err != nil {
-				log.Panic(err)
-			}
-
-			// Store serialized Block structure.
-			err = b.Put(genesis.Hash, genesis.Serialize())
-			if err != nil {
-				log.Panic(err)
-			}
-
-			// Store the hash of the last block in a chain.
-			err = b.Put([]byte("l"), genesis.Hash)
-			if err != nil {
-				log.Panic(err)
-			}
-			tip = genesis.Hash
-		} else {
-			tip = b.Get([]byte("l"))
+		b, err := tx.CreateBucket([]byte(blocksBucket))
+		if err != nil {
+			log.Panic(err)
 		}
+
+		// Store serialized Block structure.
+		err = b.Put(genesis.Hash, genesis.Serialize())
+		if err != nil {
+			log.Panic(err)
+		}
+
+		// Store the hash of the last block in a chain.
+		err = b.Put([]byte("l"), genesis.Hash)
+		if err != nil {
+			log.Panic(err)
+		}
+		tip = genesis.Hash
 
 		return nil
 	})
+	if err != nil {
+		log.Panic(err)
+	}
 
 	return &Blockchain{tip, db}
 }

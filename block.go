@@ -7,21 +7,21 @@ import (
 	"time"
 )
 
-// A Block is composed of headers and transactons(Data in this case). This is a
+// A Block is composed of headers and transactons. This is a
 // simplified and mixed datastructure.
 type Block struct {
 	Timestamp     int64
-	Data          []byte
+	Transactions  []*Transaction
 	PrevBlockHash []byte
 	Hash          []byte
 	Nonce         int
 }
 
 // NewBlock creates a block with block data and previous block hash and returns it.
-func NewBlock(data string, prevBlockHash []byte) *Block {
+func NewBlock(transactions []*Transaction, prevBlockHash []byte) *Block {
 	block := &Block{
 		Timestamp:     time.Now().Unix(),
-		Data:          []byte(data),
+		Transactions:  transactions,
 		PrevBlockHash: prevBlockHash,
 		Hash:          []byte{}, // hash will be calculated block itself.
 		Nonce:         0,
@@ -36,8 +36,8 @@ func NewBlock(data string, prevBlockHash []byte) *Block {
 }
 
 // NewGenesisBlock creates and returns genesis Block.
-func NewGenesisBlock() *Block {
-	return NewBlock("Genesis block", []byte{})
+func NewGenesisBlock(coinbase *Transaction) *Block {
+	return NewBlock([]*Transaction{coinbase}, []byte{})
 }
 
 // Serialize encodes a block struct into gob data.
