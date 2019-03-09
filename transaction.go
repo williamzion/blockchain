@@ -18,6 +18,11 @@ type TXOutput struct {
 	ScriptPubKey string
 }
 
+// CanBeUnlockedWith checks if the output can be unlocked with the provided data.
+func (out *TXOutput) CanBeUnlockedWith(unlockingData string) bool {
+	return out.ScriptPubKey == unlockingData
+}
+
 // TXInput represents a transaction input.
 type TXInput struct {
 	// references previous output.
@@ -26,6 +31,11 @@ type TXInput struct {
 	Vout int
 	// script providing data to be used in an output’s ScriptPubKey
 	ScriptSig string
+}
+
+// CanUnlockOutputWith checks whether the address initiated the transaction.
+func (in *TXInput) CanUnlockOutputWith(unlockingData string) bool {
+	return in.ScriptSig == unlockingData
 }
 
 // NewCoinbaseTX creates a new coinbase transaction.
