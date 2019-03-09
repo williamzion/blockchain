@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/gob"
 	"log"
 	"time"
@@ -15,6 +16,21 @@ type Block struct {
 	PrevBlockHash []byte
 	Hash          []byte
 	Nonce         int
+}
+
+// HashTransactions returns a hash of transactions in the block.
+func (b *Block) HashTransactions() []byte {
+	var (
+		txHashes [][]byte
+		txHash   [32]byte
+	)
+
+	for _, tx := range b.Transactions {
+		txHashes = append(txHashes, tx.ID)
+	}
+	txHash = sha256.Sum256(bytes.Join(txHashes, []byte{}))
+
+	return txHash[:]
 }
 
 // NewBlock creates a block with block data and previous block hash and returns it.
