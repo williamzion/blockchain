@@ -34,8 +34,10 @@ func (cli *CLI) getBalance(address string) {
 
 func (cli *CLI) printUsage() {
 	fmt.Println("Usage:")
-	fmt.Println("	addblock -data BLOCK_DATA: add a block to the blockchain.")
-	fmt.Println("	printchain: print all blocks of the blockchain.")
+	fmt.Println(" getbalance -address ADDRESS: Get balance of ADDRESS.")
+	fmt.Println(" createblockchain -address ADDRESS: Create a blockchain and send genesis block reward to ADDRESS")
+	fmt.Println("	printchain: Print all blocks of the blockchain.")
+	fmt.Println(" send -from FROM -to TO -amount AMOUNT: Send AMOUNT of coins from FROM address to TO")
 }
 
 func (cli *CLI) validateArgs() {
@@ -43,11 +45,6 @@ func (cli *CLI) validateArgs() {
 		cli.printUsage()
 		os.Exit(1)
 	}
-}
-
-func (cli *CLI) addBlock(data string) {
-	cli.bc.AddBlock(data)
-	fmt.Println("Success!")
 }
 
 func (cli *CLI) printChain() {
