@@ -17,6 +17,7 @@ func (cli *CLI) getBalance(address string) {
 	bc := NewBlockChain(address)
 	defer bc.db.Close()
 
+	// The account balance is the sum of values of all unspent transaction outputs locked by the account address.
 	balance := 0
 	UTXOs := bc.FindUTXO(address)
 
