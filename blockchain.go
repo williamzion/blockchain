@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"log"
 
 	bolt "go.etcd.io/bbolt"
@@ -62,6 +63,70 @@ func (bc *Blockchain) AddBlock(transactions []*Transaction) {
 
 		return nil
 	})
+}
+
+// FindUnspentTransactions returns a list of transactions containing unspent outputs.
+func (bc *Blockchain) FindUnspentTransactions(address string) []Transaction {
+	var unspentTXs []Transaction
+	spentTXOs := make(map[string][]int)
+	bci := bc.Iterator()
+
+	for {
+		block := bci.Next()
+
+		for _, tx := range block.Transactions {
+			txID := hex.EncodeToString(tx.ID)
+
+		Outputs:
+			for outIdx, out := range tx.Vout {
+				// Was the output spent?
+				// check if an output was already referenced in an input.
+				if spentTXO, ok := spentTXOs[txID]; ok {
+					for _, spentOut := range spentTXO {
+						if spentOut == outIdx {
+							continue Outputs
+						}
+					}
+				}
+
+				// If an output was locked by the same address we’re searching unspent transaction outputs for, then this is the output we want.
+				if out.CanBeUnlockedWith(address) {
+					unspentTXs = append(unspentTXs, *tx)
+				}
+			}
+
+			if tx.IsCoinbase() == false {
+				for _, in := range tx.Vin {
+					if in.CanUnlockOutputWith(address) {
+						inTxID := hex.EncodeToString(in.Txid)
+						spentTXOs[inTxID] = append(spentTXOs[inTxID], in.Vout)
+					}
+				}
+			}
+		}
+
+		if len(block.PrevBlockHash) == 0 {
+			break
+		}
+	}
+
+	return unspentTXs
+}
+
+// FindUTXO finds and returns all unspent transaction outputs.
+func (bc *Blockchain) FindUTXO(address string) []TXOutput {
+	var UTXOs []TXOutput
+	unspentTXs := bc.FindUnspentTransactions(address)
+
+	for _, tx := range unspentTXs {
+		for _, out := range tx.Vout {
+			if out.CanBeUnlockedWith(address) {
+				UTXOs = append(UTXOs, out)
+			}
+		}
+	}
+
+	return UTXOs
 }
 
 // Iterator returns an iterator of a blockchain at current state starting from the tip.
