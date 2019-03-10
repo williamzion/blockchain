@@ -113,5 +113,5 @@ func NewUTXOTransaction(from, to string, amount int, bc *Blockchain) *Transactio
 		Vout: outputs,
 	}
 	tx.SetID()
-	return tx
+	return &tx
 }
