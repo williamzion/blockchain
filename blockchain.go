@@ -31,8 +31,8 @@ type BlockchainIterator struct {
 	db          *bolt.DB
 }
 
-// AddBlock saves provided data as a block adding to the blockchain.
-func (bc *Blockchain) AddBlock(transactions []*Transaction) {
+// MineBlock saves provided transactions as a block adding to the blockchain.
+func (bc *Blockchain) MineBlock(transactions []*Transaction) {
 	var lastHash []byte
 
 	err := bc.db.View(func(tx *bolt.Tx) error {
