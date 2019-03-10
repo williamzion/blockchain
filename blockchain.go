@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/hex"
+	"fmt"
 	"log"
+	"os"
 
 	bolt "go.etcd.io/bbolt"
 )
@@ -178,10 +180,47 @@ func (i *BlockchainIterator) Next() *Block {
 	return block
 }
 
+func dbExists() bool {
+	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
 // NewBlockChain returns a new blockchain with genesis block.
 // It takes an address which will receive the reward for mining the genesis block.
 // A db connection included in the returned value is intended to be reused.
-func NewBlockChain(address string) *Blockchain {
+func NewBlockChain() *Blockchain {
+	if dbExists() == false {
+		fmt.Println("No existing blockchain found. Create one first.")
+		os.Exit(1)
+	}
+
+	var tip []byte
+	db, err := bolt.Open(dbFile, 0600, nil)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+		tip = b.Get([]byte("l"))
+		return nil
+	})
+	if err != nil {
+		log.Panic(err)
+	}
+
+	return &Blockchain{tip, db}
+}
+
+// CreateBlockChain creates a new blockchain.
+func CreateBlockChain(address string) *Blockchain {
+	if dbExists() {
+		fmt.Println("Blockchain already exists.")
+		os.Exit(1)
+	}
+
 	var tip []byte
 	db, err := bolt.Open(dbFile, 0600, nil)
 	if err != nil {
