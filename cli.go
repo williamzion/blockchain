@@ -66,6 +66,15 @@ func (cli *CLI) printChain() {
 	}
 }
 
+func (cli *CLI) send(from, to string, amount int) {
+	bc := NewBlockChain(from)
+	defer bc.db.Close()
+
+	tx := NewUTXOTransaction(from, to, amount, bc)
+	bc.MineBlock([]*Transaction{tx})
+	fmt.Println("Success!")
+}
+
 // Run is an entry point for CLI, it parses command line arguments and process es commands.
 func (cli *CLI) Run() {
 	cli.validateArgs()
