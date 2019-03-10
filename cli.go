@@ -9,9 +9,7 @@ import (
 )
 
 // CLI represents command line.
-type CLI struct {
-	bc *Blockchain
-}
+type CLI struct {}
 
 func (cli *CLI) getBalance(address string) {
 	bc := NewBlockChain(address)
