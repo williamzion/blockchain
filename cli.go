@@ -9,10 +9,16 @@ import (
 )
 
 // CLI represents command line.
-type CLI struct {}
+type CLI struct{}
+
+func (cli *CLI) createBlockChain(address string) {
+	bc := CreateBlockChain(address)
+	bc.db.Close()
+	fmt.Println("Done creating blockchain.")
+}
 
 func (cli *CLI) getBalance(address string) {
-	bc := NewBlockChain(address)
+	bc := NewBlockChain()
 	defer bc.db.Close()
 
 	// The account balance is the sum of values of all unspent transaction outputs locked by the account address.
