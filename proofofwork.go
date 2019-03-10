@@ -51,13 +51,15 @@ func (pow *ProofOfWork) prepareData(nonce int) []byte {
 
 // Run is the core of PoW algorithm, it performs the proof-of-work.
 func (pow *ProofOfWork) Run() (int, []byte) {
-	// Integer representation of hash.
-	var hashInt big.Int
-	var hash [32]byte
+	var (
+		// Integer representation of hash.
+		hashInt big.Int
+		hash    [32]byte
+	)
 	// The counter.
 	nonce := 0
 
-	fmt.Printf("Mining the block containing %q\n", pow.block.Data)
+	fmt.Println("Mining a new block.")
 	for nonce < maxNonce {
 		data := pow.prepareData(nonce)
 
