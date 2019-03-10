@@ -106,6 +106,9 @@ func NewUTXOTransaction(from, to string, amount int, bc *Blockchain) *Transactio
 	// Build a list of inputs.
 	for txid, outs := range validOutputs {
 		txID, err := hex.DecodeString(txid)
+		if err != nil {
+			log.Panic(err)
+		}
 
 		for _, out := range outs {
 			input := TXInput{
