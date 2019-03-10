@@ -188,7 +188,6 @@ func dbExists() bool {
 }
 
 // NewBlockChain returns a new blockchain with genesis block.
-// It takes an address which will receive the reward for mining the genesis block.
 // A db connection included in the returned value is intended to be reused.
 func NewBlockChain() *Blockchain {
 	if dbExists() == false {
@@ -215,6 +214,7 @@ func NewBlockChain() *Blockchain {
 }
 
 // CreateBlockChain creates a new blockchain.
+// It takes an address which will receive the reward for mining the genesis block.
 func CreateBlockChain(address string) *Blockchain {
 	if dbExists() {
 		fmt.Println("Blockchain already exists.")
