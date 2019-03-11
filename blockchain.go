@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -208,6 +209,21 @@ func (i *BlockchainIterator) Next() *Block {
 
 	i.currentHash = block.PrevBlockHash
 	return block
+}
+
+// SignTransaction signs inputs of a Transaction.
+func (bc *Blockchain) SignTransaction(tx *Transaction, privKey ecdsa.PrivateKey) {
+	prevTXs := make(map[string]Transaction)
+
+	for _, vin := range tx.Vin {
+		prevTx, err := bc.FindTransaction(vin.Txid)
+		if err != nil {
+			log.Panic(err)
+		}
+		prevTXs[hex.EncodeToString(prevTx.ID)] = prevTx
+	}
+
+	tx.Sign(privKey, prevTXs)
 }
 
 func dbExists() bool {
