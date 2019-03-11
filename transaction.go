@@ -51,21 +51,6 @@ func (out *TXOutput) CanBeUnlockedWith(unlockingData string) bool {
 	return out.ScriptPubKey == unlockingData
 }
 
-// TXInput represents a transaction input.
-type TXInput struct {
-	// references previous output.
-	Txid []byte
-	// index of an output in the transaction.
-	Vout int
-	// script providing data to be used in an output’s ScriptPubKey
-	ScriptSig string
-}
-
-// CanUnlockOutputWith checks whether the address initiated the transaction.
-func (in *TXInput) CanUnlockOutputWith(unlockingData string) bool {
-	return in.ScriptSig == unlockingData
-}
-
 // NewCoinbaseTX creates a new coinbase transaction.
 func NewCoinbaseTX(to, data string) *Transaction {
 	if data == "" {
