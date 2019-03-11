@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/gob"
 	"encoding/hex"
@@ -38,6 +40,90 @@ func (tx *Transaction) SetID() {
 	}
 	hash = sha256.Sum256(encoded.Bytes())
 	tx.ID = hash[:]
+}
+
+func (tx *Transaction) Sign(privKey ecdsa.PrivateKey, prevTXs map[string]Transaction) {
+	if tx.IsCoinbase() {
+		return
+	}
+
+	txCopy := tx.TrimmedCopy()
+
+	for inID, vin := range txCopy.Vin {
+		prevTx := prevTXs[hex.EncodeToString(vin.Txid)]
+		// Set to nil, double-check.
+		txCopy.Vin[inID].Signature = nil
+		txCopy.Vin[inID].PubKey = prevTx.Vout[vin.Vout].PubKeyHash
+		txCopy.ID = txCopy.Hash()
+		// Reset PubKey to nil.
+		txCopy.Vin[inID].PubKey = nil
+
+		r, s, err := ecdsa.Sign(rand.Reader, &privKey, txCopy.ID)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		signature := append(r.Bytes(), s.Bytes()...)
+
+		tx.Vin[inID].Signature = signature
+	}
+}
+
+// TrimmedCopy creates a trimmed copy of Transaction to be used in signing.
+func (tx *Transaction) TrimmedCopy() Transaction {
+	var (
+		inputs  []TXInput
+		outputs []TXOutput
+	)
+
+	for _, vin := range tx.Vin {
+		// Note: TXInput.Signature and TXInput.PubKey should be set to nil.
+		inputs = append(inputs, TXInput{
+			Txid:      vin.Txid,
+			Vout:      vin.Vout,
+			Signature: nil,
+			PubKey:    nil,
+		})
+	}
+
+	for _, vout := range tx.Vout {
+		outputs = append(outputs, TXOutput{
+			Value:      vout.Value,
+			PubKeyHash: vout.PubKeyHash,
+		})
+	}
+
+	txCopy := Transaction{
+		ID:   tx.ID,
+		Vin:  inputs,
+		Vout: outputs,
+	}
+	return txCopy
+}
+
+// Hash returns the hash of the Transaction.
+func (tx *Transaction) Hash() []byte {
+	var hash [32]byte
+
+	txCopy := *tx
+	txCopy.ID = []byte{}
+
+	hash = sha256.Sum256(txCopy.Serialize())
+
+	return hash[:]
+}
+
+// Serialize returns a serialized Transaction.
+func (tx Transaction) Serialize() []byte {
+	var encoded bytes.Buffer
+
+	enc := gob.NewEncoder(&encoded)
+	err := enc.Encode(tx)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	return encoded.Bytes()
 }
 
 // NewCoinbaseTX creates a new coinbase transaction.
