@@ -28,22 +28,6 @@ func (tx *Transaction) IsCoinbase() bool {
 	return len(tx.Vin) == 1 && len(tx.Vin[0].Txid) == 0 && tx.Vin[0].Vout == -1
 }
 
-// SetID sets ID of a transaction.
-func (tx *Transaction) SetID() {
-	var (
-		encoded bytes.Buffer
-		hash    [32]byte
-	)
-
-	enc := gob.NewEncoder(&encoded)
-	err := enc.Encode(tx)
-	if err != nil {
-		log.Panic(err)
-	}
-	hash = sha256.Sum256(encoded.Bytes())
-	tx.ID = hash[:]
-}
-
 func (tx *Transaction) Sign(privKey ecdsa.PrivateKey, prevTXs map[string]Transaction) {
 	if tx.IsCoinbase() {
 		return
@@ -244,6 +228,7 @@ func NewUTXOTransaction(from, to string, amount int, bc *Blockchain) *Transactio
 		Vin:  inputs,
 		Vout: outputs,
 	}
-	tx.SetID()
+	tx.ID = tx.Hash()
+	bc.SignTransaction(&tx, Wallet.PrivateKey)
 	return &tx
 }

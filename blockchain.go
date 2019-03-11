@@ -39,6 +39,12 @@ type BlockchainIterator struct {
 func (bc *Blockchain) MineBlock(transactions []*Transaction) {
 	var lastHash []byte
 
+	for _, tx := range transactions {
+		if bc.VerifyTransaction(tx) != true {
+			log.Panic("error: invalid transaction.")
+		}
+	}
+
 	err := bc.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		lastHash = b.Get([]byte("l"))
