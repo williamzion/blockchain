@@ -49,3 +49,8 @@ func (ws *Wallets) LoadFromFile() error {
 
 	return nil
 }
+
+// GetWallet returns a Wallet by its address.
+func (ws Wallets) GetWallet(address string) Wallet {
+	return *ws.Wallets[address]
+}

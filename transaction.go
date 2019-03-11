@@ -211,7 +211,13 @@ func NewUTXOTransaction(from, to string, amount int, bc *Blockchain) *Transactio
 		outputs []TXOutput
 	)
 
-	acc, validOutputs := bc.FindSpendableOutputs(from, amount)
+	wallets, err := NewWallets()
+	if err != nil {
+		log.Panic(err)
+	}
+	wallet := wallets.GetWallet(from)
+	pubKeyHash := HashPubKey(wallet.PublicKey)
+	acc, validOutputs := bc.FindSpendableOutputs(pubKeyHash, amount)
 	if acc < amount {
 		log.Panic("error: not enough funds")
 	}
@@ -227,7 +233,8 @@ func NewUTXOTransaction(from, to string, amount int, bc *Blockchain) *Transactio
 			input := TXInput{
 				Txid:      txID,
 				Vout:      out,
-				ScriptSig: from,
+				Signature: nil,
+				PubKey:    wallet.PublicKey,
 			}
 			inputs = append(inputs, input)
 		}
@@ -235,16 +242,10 @@ func NewUTXOTransaction(from, to string, amount int, bc *Blockchain) *Transactio
 
 	// Build a list of outputs.
 	// outputs that’s locked with the receiver address. This is the actual transferring of coins to other address.
-	outputs = append(outputs, TXOutput{
-		Value:        amount,
-		ScriptPubKey: to,
-	})
+	outputs = append(outputs, *NewTXOutput(amount, to))
 	if acc > amount {
 		// outputs that’s locked with the sender address. This is a change.
-		outputs = append(outputs, TXOutput{
-			Value:        acc - amount, // a change
-			ScriptPubKey: from,
-		})
+		outputs = append(outputs, *NewTXOutput(acc-amount, from))
 	}
 
 	tx := Transaction{
@@ -253,6 +254,6 @@ func NewUTXOTransaction(from, to string, amount int, bc *Blockchain) *Transactio
 		Vout: outputs,
 	}
 	tx.ID = tx.Hash()
-	bc.SignTransaction(&tx, Wallet.PrivateKey)
+	bc.SignTransaction(&tx, wallet.PrivateKey)
 	return &tx
 }
