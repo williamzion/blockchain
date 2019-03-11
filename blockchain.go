@@ -183,7 +183,7 @@ func (bc *Blockchain) FindTransaction(ID []byte) (Transaction, error) {
 		}
 	}
 
-	return Transaction{}, errors.New("transaction is not found.")
+	return Transaction{}, errors.New("transaction is not found")
 }
 
 // Iterator returns an iterator of a blockchain at current state starting from the tip.
