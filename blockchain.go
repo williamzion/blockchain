@@ -79,7 +79,7 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction) {
 }
 
 // FindUnspentTransactions returns a list of transactions containing unspent outputs.
-func (bc *Blockchain) FindUnspentTransactions(address string) []Transaction {
+func (bc *Blockchain) FindUnspentTransactions(pubKeyHash []byte) []Transaction {
 	var unspentTXs []Transaction
 	spentTXOs := make(map[string][]int)
 	bci := bc.Iterator()
@@ -103,14 +103,14 @@ func (bc *Blockchain) FindUnspentTransactions(address string) []Transaction {
 				}
 
 				// If an output was locked by the same address we’re searching unspent transaction outputs for, then this is the output we want.
-				if out.CanBeUnlockedWith(address) {
+				if out.IsLockedWithKey(pubKeyHash) {
 					unspentTXs = append(unspentTXs, *tx)
 				}
 			}
 
 			if tx.IsCoinbase() == false {
 				for _, in := range tx.Vin {
-					if in.CanUnlockOutputWith(address) {
+					if in.UsesKey(pubKeyHash) {
 						inTxID := hex.EncodeToString(in.Txid)
 						spentTXOs[inTxID] = append(spentTXOs[inTxID], in.Vout)
 					}
