@@ -73,6 +73,9 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction) {
 
 		return nil
 	})
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 // FindUnspentTransactions returns a list of transactions containing unspent outputs.
