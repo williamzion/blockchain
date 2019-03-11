@@ -12,6 +12,9 @@ import (
 type CLI struct{}
 
 func (cli *CLI) createBlockChain(address string) {
+	if !ValidateAddr(address) {
+		log.Panic("error: address is not valid")
+	}
 	bc := CreateBlockChain(address)
 	bc.db.Close()
 	fmt.Println("Done creating blockchain.")
@@ -34,9 +37,10 @@ func (cli *CLI) getBalance(address string) {
 
 func (cli *CLI) printUsage() {
 	fmt.Println("Usage:")
-	fmt.Println(" getbalance -address ADDRESS: Get balance of ADDRESS.")
 	fmt.Println(" createblockchain -address ADDRESS: Create a blockchain and send genesis block reward to ADDRESS")
-	fmt.Println("	printchain: Print all blocks of the blockchain.")
+	fmt.Println(" createwallet: Generate a new key pair and saves it to the wallet file")
+	fmt.Println(" getbalance -address ADDRESS: Get balance of ADDRESS")
+	fmt.Println("	printchain: Print all blocks of the blockchain")
 	fmt.Println(" send -from FROM -to TO -amount AMOUNT: Send AMOUNT of coins from FROM address to TO")
 }
 
