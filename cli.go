@@ -51,10 +51,23 @@ func (cli *CLI) createWallet() {
 	fmt.Printf("Your new address: %s\n", address)
 }
 
+func (cli *CLI) listAllAddrs() {
+	wallets, err := NewWallets()
+	if err != nil {
+		log.Panic(err)
+	}
+	addresses := wallets.GetAddrs()
+
+	for _, address := range addresses {
+		fmt.Println(address)
+	}
+}
+
 func (cli *CLI) printUsage() {
 	fmt.Println("Usage:")
 	fmt.Println(" createblockchain -address ADDRESS: Create a blockchain and send genesis block reward to ADDRESS")
 	fmt.Println(" createwallet: Generate a new key pair and saves it to the wallet file")
+	fmt.Println(" listaddresses: List all addresses from the wallet file")
 	fmt.Println(" getbalance -address ADDRESS: Get balance of ADDRESS")
 	fmt.Println("	printchain: Print all blocks of the blockchain")
 	fmt.Println(" send -from FROM -to TO -amount AMOUNT: Send AMOUNT of coins from FROM address to TO")
