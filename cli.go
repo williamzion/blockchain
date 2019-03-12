@@ -29,13 +29,14 @@ func (cli *CLI) getBalance(address string) {
 		log.Panic("error: address is not valid")
 	}
 	bc := NewBlockChain()
+	UTXOSet := UTXOSet{bc}
 	defer bc.db.Close()
 
 	// The account balance is the sum of values of all unspent transaction outputs locked by the account address.
 	balance := 0
 	pubKeyHash := Base58Decode([]byte(address))
 	pubKeyHash = pubKeyHash[1 : len(pubKeyHash)-4]
-	UTXOs := bc.FindUTXO(pubKeyHash)
+	UTXOs := UTXOSet.FindUTXO(pubKeyHash)
 
 	for _, out := range UTXOs {
 		balance += out.Value
