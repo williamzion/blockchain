@@ -172,7 +172,8 @@ func (u UTXOSet) Update(block *Block) {
 	}
 }
 
-func (u UTXOSet) CountTransaction() int {
+// CountTransactions returns the number of transactions in the UTXO set.
+func (u UTXOSet) CountTransactions() int {
 	db := u.Blockchain.db
 	counter := 0
 
