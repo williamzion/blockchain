@@ -14,7 +14,7 @@ var maxNonce = math.MaxInt64
 // Difficulty of mining.
 // In Bitcoin, “target bits” is the block header storing the difficulty at which the block was mined. We won’t implement a target adjusting algorithm, for now, so we can just define the difficulty as a global constant.
 // 24 is an arbitrary number.
-const targetBits = 24
+const targetBits = 16
 
 // ProofOfWork represents proof-of-work.
 type ProofOfWork struct {
