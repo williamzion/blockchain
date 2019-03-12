@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/gob"
 	"log"
 	"time"
@@ -20,17 +19,14 @@ type Block struct {
 
 // HashTransactions returns a hash of transactions in the block.
 func (b *Block) HashTransactions() []byte {
-	var (
-		txHashes [][]byte
-		txHash   [32]byte
-	)
+	var transactions [][]byte
 
 	for _, tx := range b.Transactions {
-		txHashes = append(txHashes, tx.ID)
+		transactions = append(transactions, tx.Serialize())
 	}
-	txHash = sha256.Sum256(bytes.Join(txHashes, []byte{}))
+	mTree := NewMerkleTree(transactions)
 
-	return txHash[:]
+	return mTree.RootNode.Data
 }
 
 // NewBlock creates a block with block data and previous block hash and returns it.
