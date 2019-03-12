@@ -110,10 +110,14 @@ func (cli *CLI) send(from, to string, amount int) {
 		log.Panic("error: address is not valid")
 	}
 	bc := NewBlockChain()
+	UTXOSet := UTXOSet{bc}
 	defer bc.db.Close()
 
-	tx := NewUTXOTransaction(from, to, amount, bc)
-	bc.MineBlock([]*Transaction{tx})
+	tx := NewUTXOTransaction(from, to, amount, &UTXOSet)
+	cbTx := NewCoinbaseTX(from, "")
+	txs := []*Transaction{cbTx, tx}
+
+	bc.MineBlock(txs)
 	fmt.Println("Success!")
 }
 
