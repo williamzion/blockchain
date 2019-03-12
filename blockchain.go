@@ -29,7 +29,7 @@ type Blockchain struct {
 }
 
 // MineBlock saves provided transactions as a block adding to the blockchain.
-func (bc *Blockchain) MineBlock(transactions []*Transaction) {
+func (bc *Blockchain) MineBlock(transactions []*Transaction) *Block {
 	var lastHash []byte
 
 	for _, tx := range transactions {
@@ -69,6 +69,8 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction) {
 	if err != nil {
 		log.Panic(err)
 	}
+
+	return newBlock
 }
 
 // FindUnspentTransactions returns a list of transactions containing unspent outputs.
