@@ -20,7 +20,7 @@ func (cli *CLI) createBlockChain(address string) {
 
 	UTXOSet := UTXOSet{bc}
 	UTXOSet.Reindex()
-	
+
 	fmt.Println("Done creating blockchain.")
 }
 
@@ -121,7 +121,8 @@ func (cli *CLI) send(from, to string, amount int) {
 	cbTx := NewCoinbaseTX(from, "")
 	txs := []*Transaction{cbTx, tx}
 
-	bc.MineBlock(txs)
+	newBlock := bc.MineBlock(txs)
+	UTXOSet.Update(newBlock)
 	fmt.Println("Success!")
 }
 
