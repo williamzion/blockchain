@@ -75,6 +75,7 @@ func (cli *CLI) printUsage() {
 	fmt.Println(" listaddresses: List all addresses from the wallet file")
 	fmt.Println(" getbalance -address ADDRESS: Get balance of ADDRESS")
 	fmt.Println("	printchain: Print all blocks of the blockchain")
+	fmt.Println(" reindexutxo: Rebuilds the UTXO set")
 	fmt.Println(" send -from FROM -to TO -amount AMOUNT: Send AMOUNT of coins from FROM address to TO")
 }
 
@@ -127,6 +128,15 @@ func (cli *CLI) send(from, to string, amount int) {
 	fmt.Println("Success!")
 }
 
+func (cli *CLI) reindexUTXO() {
+	bc := NewBlockChain()
+	UTXOSet := UTXOSet{bc}
+	UTXOSet.Reindex()
+
+	count := UTXOSet.CountTransaction()
+	fmt.Printf("Done! There are %d transactions in the UTXO set.\n", count)
+}
+
 // Run is an entry point for CLI, it parses command line arguments and process es commands.
 func (cli *CLI) Run() {
 	cli.validateArgs()
@@ -136,6 +146,7 @@ func (cli *CLI) Run() {
 	createWalletCmd := flag.NewFlagSet("createwallet", flag.ExitOnError)
 	listAddrsCmd := flag.NewFlagSet("listaddresses", flag.ExitOnError)
 	sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
+	reindexUTXOCmd := flag.NewFlagSet("reindexutxo", flag.ExitOnError)
 	printChainCmd := flag.NewFlagSet("printchain", flag.ExitOnError)
 
 	getBalanceAddr := getBalanceCmd.String("address", "", "The address to get balance for")
@@ -167,6 +178,11 @@ func (cli *CLI) Run() {
 		}
 	case "printchain":
 		err := printChainCmd.Parse(os.Args[2:])
+		if err != nil {
+			log.Panic(err)
+		}
+	case "reindexutxo":
+		err := reindexUTXOCmd.Parse(os.Args[2:])
 		if err != nil {
 			log.Panic(err)
 		}
@@ -202,6 +218,10 @@ func (cli *CLI) Run() {
 
 	if listAddrsCmd.Parsed() {
 		cli.listAllAddrs()
+	}
+
+	if reindexUTXOCmd.Parsed() {
+		cli.reindexUTXO()
 	}
 
 	if printChainCmd.Parsed() {
