@@ -75,6 +75,7 @@ func checksum(payload []byte) []byte {
 	return secondSHA[:addressChecksumLen]
 }
 
+// ValidateAddr checks whether address is valid.
 func ValidateAddr(address string) bool {
 	pubKeyHash := Base58Decode([]byte(address))
 	actualChecksum := pubKeyHash[len(pubKeyHash)-addressChecksumLen:]
