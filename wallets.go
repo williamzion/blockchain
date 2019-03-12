@@ -65,7 +65,7 @@ func (ws *Wallets) CreateWallet() string {
 	return address
 }
 
-// GetAddresses returns an array of addresses stored in the wallet file.
+// GetAddrs returns an array of addresses stored in the wallet file.
 func (ws *Wallets) GetAddrs() []string {
 	var addresses []string
 
