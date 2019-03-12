@@ -103,6 +103,12 @@ func (cli *CLI) printChain() {
 }
 
 func (cli *CLI) send(from, to string, amount int) {
+	if !ValidateAddr(from) {
+		log.Panic("error: address is not valid")
+	}
+	if !ValidateAddr(to) {
+		log.Panic("error: address is not valid")
+	}
 	bc := NewBlockChain()
 	defer bc.db.Close()
 
