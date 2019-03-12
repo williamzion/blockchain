@@ -73,54 +73,6 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction) *Block {
 	return newBlock
 }
 
-// FindUnspentTransactions returns a list of transactions containing unspent outputs.
-func (bc *Blockchain) FindUnspentTransactions(pubKeyHash []byte) []Transaction {
-	var unspentTXs []Transaction
-	spentTXOs := make(map[string][]int)
-	bci := bc.Iterator()
-
-	for {
-		block := bci.Next()
-
-		for _, tx := range block.Transactions {
-			txID := hex.EncodeToString(tx.ID)
-
-		Outputs:
-			for outIdx, out := range tx.Vout {
-				// Was the output spent?
-				// check if an output was already referenced in an input.
-				if spentTXO, ok := spentTXOs[txID]; ok {
-					for _, spentOut := range spentTXO {
-						if spentOut == outIdx {
-							continue Outputs
-						}
-					}
-				}
-
-				// If an output was locked by the same address we’re searching unspent transaction outputs for, then this is the output we want.
-				if out.IsLockedWithKey(pubKeyHash) {
-					unspentTXs = append(unspentTXs, *tx)
-				}
-			}
-
-			if tx.IsCoinbase() == false {
-				for _, in := range tx.Vin {
-					if in.UsesKey(pubKeyHash) {
-						inTxID := hex.EncodeToString(in.Txid)
-						spentTXOs[inTxID] = append(spentTXOs[inTxID], in.Vout)
-					}
-				}
-			}
-		}
-
-		if len(block.PrevBlockHash) == 0 {
-			break
-		}
-	}
-
-	return unspentTXs
-}
-
 // FindUTXO finds and returns all unspent transaction outputs and returns transactions with spent outputs removed.
 func (bc *Blockchain) FindUTXO() map[string]TXOutputs {
 	UTXO := make(map[string]TXOutputs)
