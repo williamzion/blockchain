@@ -40,6 +40,17 @@ func (cli *CLI) getBalance(address string) {
 	fmt.Printf("Balance of %q: %d\n", address, balance)
 }
 
+func (cli *CLI) createWallet() {
+	wallets, err := NewWallets()
+	if err != nil {
+		log.Panic(err)
+	}
+	address := wallets.CreateWallet()
+	wallets.SaveToFile()
+
+	fmt.Printf("Your new address: %s\n", address)
+}
+
 func (cli *CLI) printUsage() {
 	fmt.Println("Usage:")
 	fmt.Println(" createblockchain -address ADDRESS: Create a blockchain and send genesis block reward to ADDRESS")
