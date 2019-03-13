@@ -57,6 +57,10 @@ type block struct {
 	Block    []byte
 }
 
+type addr struct {
+	AddrList []string
+}
+
 // StartServer starts a node.
 func StartServer(nodeID, minerAddr string) {
 	nodeAddr = fmt.Sprintf("localhost:%s", nodeID)
@@ -152,6 +156,13 @@ func sendBlock(addr string, b *Block) {
 	sendData(addr, request)
 }
 
+func sendGetBlocks(address string) {
+	payload := gobEncode(getblocks{nodeAddr})
+	request := append(commandToBytes("getblocks"), payload...)
+
+	sendData(address, request)
+}
+
 func sendVersion(addr string, bc *Blockchain) {
 	bestHeight := bc.GetBestHeight()
 	payload := gobEncode(
@@ -200,6 +211,12 @@ func bytesToCommand(bytes []byte) string {
 	return fmt.Sprintf("%s", command)
 }
 
+func requestBlocks() {
+	for _, node := range knownNodes {
+		sendGetBlocks(node)
+	}
+}
+
 func handleConn(conn net.Conn, bc *Blockchain) {
 	request, err := ioutil.ReadAll(conn)
 	if err != nil {
@@ -210,12 +227,19 @@ func handleConn(conn net.Conn, bc *Blockchain) {
 
 	switch command {
 	case "addr":
+		handleAddr(request)
 	case "block":
+		handleBlock(request, bc)
 	case "inv":
+		handleInv(request, bc)
 	case "getblocks":
+		handleGetBlocks(request, bc)
 	case "getdata":
+		handleGetData(request, bc)
 	case "tx":
+		handleTx(request, bc)
 	case "version":
+		handleVersion(request, bc)
 	default:
 		fmt.Println("Unknown command!")
 	}
@@ -428,4 +452,20 @@ func handleTx(request []byte, bc *Blockchain) {
 			}
 		}
 	}
+}
+
+func handleAddr(request []byte) {
+	var buff bytes.Buffer
+	var payload addr
+
+	buff.Write(request[commandLength:])
+	dec := gob.NewDecoder(&buff)
+	err := dec.Decode(&payload)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	knownNodes = append(knownNodes, payload.AddrList...)
+	fmt.Printf("There are %d known nodes now!\n", len(knownNodes))
+	requestBlocks()
 }
