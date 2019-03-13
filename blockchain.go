@@ -30,7 +30,10 @@ type Blockchain struct {
 
 // MineBlock saves provided transactions as a block adding to the blockchain.
 func (bc *Blockchain) MineBlock(transactions []*Transaction) *Block {
-	var lastHash []byte
+	var (
+		lastHash   []byte
+		lastHeight int
+	)
 
 	for _, tx := range transactions {
 		if bc.VerifyTransaction(tx) != true {
@@ -41,13 +44,18 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction) *Block {
 	err := bc.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		lastHash = b.Get([]byte("l"))
+
+		blockData := b.Get(lastHash)
+		block := DeserializeBlock(blockData)
+		lastHeight = block.Height
+
 		return nil
 	})
 	if err != nil {
 		log.Panic(err)
 	}
 
-	newBlock := NewBlock(transactions, lastHash)
+	newBlock := NewBlock(transactions, lastHash, lastHeight+1)
 
 	err = bc.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))

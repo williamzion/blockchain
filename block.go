@@ -51,7 +51,7 @@ func NewBlock(transactions []*Transaction, prevBlockHash []byte, height int) *Bl
 
 // NewGenesisBlock creates and returns genesis Block.
 func NewGenesisBlock(coinbase *Transaction) *Block {
-	return NewBlock([]*Transaction{coinbase}, []byte{})
+	return NewBlock([]*Transaction{coinbase}, []byte{}, 0)
 }
 
 // Serialize encodes a block struct into gob data.
