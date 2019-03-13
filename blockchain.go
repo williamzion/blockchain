@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	dbFile              = "blockchain.db"
+	dbFile              = "blockchain_%s.db"
 	blocksBucket        = "blocks"
 	genesisCoinbaseData = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks"
 )
@@ -178,7 +178,8 @@ func dbExists() bool {
 
 // NewBlockChain returns a new blockchain with genesis block.
 // A db connection included in the returned value is intended to be reused.
-func NewBlockChain() *Blockchain {
+func NewBlockChain(nodeID string) *Blockchain {
+	dbFile := fmt.Sprintf(dbFile, nodeID)
 	if dbExists() == false {
 		fmt.Println("No existing blockchain found. Create one first.")
 		os.Exit(1)
