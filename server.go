@@ -29,7 +29,7 @@ type verzion struct {
 }
 
 type tx struct {
-	AddFrom     string
+	AddrFrom     string
 	Transaction []byte
 }
 
@@ -83,7 +83,7 @@ func sendData(addr string, data []byte) {
 
 func sendTx(addr string, tnx *Transaction) {
 	data := tx{
-		AddFrom:     nodeAddr,
+		AddrFrom:     nodeAddr,
 		Transaction: tnx.Serialize(),
 	}
 	payload := gobEncode(data)
@@ -160,4 +160,27 @@ func handleConn(conn net.Conn, bc *Blockchain) {
 		fmt.Println("Unknown command!")
 	}
 	conn.Close()
+}
+
+func handleVersion(request []byte, bc *Blockchain) {
+	var (
+		buff    bytes.Buffer
+		payload verzion
+	)
+
+	buff.Write(request[commandLength:])
+	dec := gob.NewDecoder(&buff)
+	err := dec.Decode(&payload)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	myBestHeight := bc.GetBestHeight()
+	foreignerBestHeight := payload.BestHeight
+
+	if myBestHeight < foreignerBestHeight {
+
+	} else if myBestHeight > foreignerBestHeight {
+		sendVersion(payload.AddrFrom, bc)
+	}
 }
