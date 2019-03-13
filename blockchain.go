@@ -176,6 +176,25 @@ func dbExists() bool {
 	return true
 }
 
+// GetBestHeight returns the height of the latest block.
+func (bc *Blockchain) GetBestHeight() int {
+	var lastBlock Block
+
+	err := bc.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+		lastHash := b.Get([]byte("l"))
+		blockData := b.Get(lastHash)
+		lastBlock = *DeserializeBlock(blockData)
+
+		return nil
+	})
+	if err != nil {
+		log.Panic(err)
+	}
+
+	return lastBlock.Height
+}
+
 // NewBlockChain returns a new blockchain with genesis block.
 // A db connection included in the returned value is intended to be reused.
 func NewBlockChain(nodeID string) *Blockchain {
