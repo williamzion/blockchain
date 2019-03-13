@@ -22,7 +22,7 @@ var (
 	knownNodes = []string{"localhost:3000"}
 )
 
-type version struct {
+type verzion struct {
 	Version    int    // blockchain version
 	BestHeight int    // length of the node’s blockchain
 	AddrFrom   string //address of the sender
@@ -73,7 +73,7 @@ func sendData(addr string, data []byte) {
 func sendVersion(addr string, bc *Blockchain) {
 	bestHeight := bc.GetBestHeight()
 	payload := gobEncode(
-		version{
+		verzion{
 			Version:    nodeVersion,
 			BestHeight: bestHeight,
 			AddrFrom:   nodeAddr,
