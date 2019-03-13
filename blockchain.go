@@ -220,6 +220,30 @@ func (bc *Blockchain) GetBlockHashes() [][]byte {
 	return blocks
 }
 
+// GetBlock finds a block by its hash and returns it.
+func (bc *Blockchain) GetBlock(blockHash []byte) (Block, error) {
+	var block Block
+
+	err := bc.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+
+		blockData := b.Get(blockHash)
+
+		if blockData == nil {
+			return errors.New("block is not found")
+		}
+
+		block = *DeserializeBlock(blockData)
+
+		return nil
+	})
+	if err != nil {
+		return block, err
+	}
+
+	return block, nil
+}
+
 // NewBlockChain returns a new blockchain with genesis block.
 // A db connection included in the returned value is intended to be reused.
 func NewBlockChain(nodeID string) *Blockchain {

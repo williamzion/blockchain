@@ -52,6 +52,11 @@ type getdata struct {
 	ID       []byte
 }
 
+type block struct {
+	AddrFrom string
+	Block    []byte
+}
+
 // StartServer starts a node.
 func StartServer(nodeID, minerAddr string) {
 	nodeAddr = fmt.Sprintf("localhost:%s", nodeID)
@@ -132,6 +137,17 @@ func sendGetData(addr, kind string, id []byte) {
 		},
 	)
 	request := append(commandToBytes("getdata"), payload...)
+
+	sendData(addr, request)
+}
+
+func sendBlock(addr string, b *Block) {
+	data := block{
+		AddrFrom: nodeAddr,
+		Block:    b.Serialize(),
+	}
+	payload := gobEncode(data)
+	request := append(commandToBytes("block"), payload...)
 
 	sendData(addr, request)
 }
@@ -282,5 +298,35 @@ func handleInv(request []byte, bc *Blockchain) {
 		if mempool[hex.EncodeToString(txID)].ID == nil {
 			sendGetData(payload.AddrFrom, "tx", txID)
 		}
+	}
+}
+
+func handleGetData(request []byte, bc *Blockchain) {
+	var (
+		buff    bytes.Buffer
+		payload getdata
+	)
+
+	buff.Write(request[commandLength:])
+	dec := gob.NewDecoder(&buff)
+	err := dec.Decode(&payload)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	if payload.Type == "block" {
+		block, err := bc.GetBlock([]byte(payload.ID))
+		if err != nil {
+			return
+		}
+
+		sendBlock(payload.AddrFrom, &block)
+	}
+
+	if payload.Type == "tx" {
+		txID := hex.EncodeToString(payload.ID)
+		tx := mempool[txID]
+
+		sendTx(payload.AddrFrom, &tx)
 	}
 }
