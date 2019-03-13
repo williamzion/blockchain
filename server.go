@@ -29,8 +29,18 @@ type verzion struct {
 }
 
 type tx struct {
-	AddrFrom     string
+	AddrFrom    string
 	Transaction []byte
+}
+
+type getblocks struct {
+	AddrFrom string
+}
+
+type inv struct {
+	AddrFrom string
+	Type     string
+	Items    [][]byte
 }
 
 // StartServer starts a node.
@@ -83,11 +93,23 @@ func sendData(addr string, data []byte) {
 
 func sendTx(addr string, tnx *Transaction) {
 	data := tx{
-		AddrFrom:     nodeAddr,
+		AddrFrom:    nodeAddr,
 		Transaction: tnx.Serialize(),
 	}
 	payload := gobEncode(data)
 	request := append(commandToBytes("tx"), payload...)
+
+	sendData(addr, request)
+}
+
+func sendInv(addr, kind string, items [][]byte) {
+	inventory := inv{
+		AddrFrom: nodeAddr,
+		Type:     kind,
+		Items:    items,
+	}
+	payload := gobEncode(inventory)
+	request := append(commandToBytes("inv"), payload...)
 
 	sendData(addr, request)
 }
@@ -183,4 +205,21 @@ func handleVersion(request []byte, bc *Blockchain) {
 	} else if myBestHeight > foreignerBestHeight {
 		sendVersion(payload.AddrFrom, bc)
 	}
+}
+
+func handleGetBlocks(request []byte, bc *Blockchain) {
+	var (
+		buff    bytes.Buffer
+		payload getblocks
+	)
+
+	buff.Write(request[commandLength:])
+	dec := gob.NewDecoder(&buff)
+	err := dec.Decode(&payload)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	blocks := bc.GetBlockHashes()
+	sendInv(payload.AddrFrom, "block", blocks)
 }
