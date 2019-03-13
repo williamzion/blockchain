@@ -232,7 +232,8 @@ func NewBlockChain(nodeID string) *Blockchain {
 
 // CreateBlockChain creates a new blockchain.
 // It takes an address which will receive the reward for mining the genesis block.
-func CreateBlockChain(address string) *Blockchain {
+func CreateBlockChain(address, nodeID string) *Blockchain {
+	dbFile := fmt.Sprintf(dbFile, nodeID)
 	if dbExists() {
 		fmt.Println("Blockchain already exists.")
 		os.Exit(1)

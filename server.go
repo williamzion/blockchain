@@ -28,11 +28,19 @@ type verzion struct {
 	AddrFrom   string //address of the sender
 }
 
+type tx struct {
+	AddFrom     string
+	Transaction []byte
+}
+
 // StartServer starts a node.
 func StartServer(nodeID, minerAddr string) {
 	nodeAddr = fmt.Sprintf("localhost:%s", nodeID)
 	miningAddr = minerAddr
 	l, err := net.Listen(protocol, nodeAddr)
+	if err != nil {
+		log.Panic(err)
+	}
 	defer l.Close()
 
 	bc := NewBlockChain(nodeID)
@@ -43,6 +51,9 @@ func StartServer(nodeID, minerAddr string) {
 
 	for {
 		conn, err := l.Accept()
+		if err != nil {
+			log.Panic(err)
+		}
 		go handleConn(conn, bc)
 	}
 }
@@ -68,6 +79,17 @@ func sendData(addr string, data []byte) {
 	if err != nil {
 		log.Panic(err)
 	}
+}
+
+func sendTx(addr string, tnx *Transaction) {
+	data := tx{
+		AddFrom:     nodeAddr,
+		Transaction: tnx.Serialize(),
+	}
+	payload := gobEncode(data)
+	request := append(commandToBytes("tx"), payload...)
+
+	sendData(addr, request)
 }
 
 func sendVersion(addr string, bc *Blockchain) {
