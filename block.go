@@ -15,6 +15,7 @@ type Block struct {
 	PrevBlockHash []byte
 	Hash          []byte
 	Nonce         int
+	Height        int
 }
 
 // HashTransactions returns a hash of transactions in the block.
@@ -30,13 +31,14 @@ func (b *Block) HashTransactions() []byte {
 }
 
 // NewBlock creates a block with block data and previous block hash and returns it.
-func NewBlock(transactions []*Transaction, prevBlockHash []byte) *Block {
+func NewBlock(transactions []*Transaction, prevBlockHash []byte, height int) *Block {
 	block := &Block{
 		Timestamp:     time.Now().Unix(),
 		Transactions:  transactions,
 		PrevBlockHash: prevBlockHash,
 		Hash:          []byte{}, // hash will be calculated block itself.
 		Nonce:         0,
+		Height:        height,
 	}
 	pow := NewProofOfWork(block)
 	nonce, hash := pow.Run()
