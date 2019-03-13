@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,9 +18,11 @@ const (
 )
 
 var (
-	nodeAddr   string
-	miningAddr string
-	knownNodes = []string{"localhost:3000"}
+	nodeAddr        string
+	miningAddr      string
+	knownNodes      = []string{"localhost:3000"}
+	blocksInTransit = [][]byte{}
+	mempool         = make(map[string]Transaction)
 )
 
 type verzion struct {
@@ -41,6 +44,12 @@ type inv struct {
 	AddrFrom string
 	Type     string
 	Items    [][]byte
+}
+
+type getdata struct {
+	AddrFrom string
+	Type     string
+	ID       []byte
 }
 
 // StartServer starts a node.
@@ -110,6 +119,19 @@ func sendInv(addr, kind string, items [][]byte) {
 	}
 	payload := gobEncode(inventory)
 	request := append(commandToBytes("inv"), payload...)
+
+	sendData(addr, request)
+}
+
+func sendGetData(addr, kind string, id []byte) {
+	payload := gobEncode(
+		getdata{
+			AddrFrom: nodeAddr,
+			Type:     kind,
+			ID:       id,
+		},
+	)
+	request := append(commandToBytes("getdata"), payload...)
 
 	sendData(addr, request)
 }
@@ -222,4 +244,43 @@ func handleGetBlocks(request []byte, bc *Blockchain) {
 
 	blocks := bc.GetBlockHashes()
 	sendInv(payload.AddrFrom, "block", blocks)
+}
+
+func handleInv(request []byte, bc *Blockchain) {
+	var (
+		buff    bytes.Buffer
+		payload inv
+	)
+
+	buff.Write(request[commandLength:])
+	dec := gob.NewDecoder(&buff)
+	err := dec.Decode(&payload)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	fmt.Printf("Received inventory with %d %s(s)\n", len(payload.Items), payload.Type)
+
+	if payload.Type == "block" {
+		blocksInTransit = payload.Items
+
+		blockHash := payload.Items[0]
+		sendGetData(payload.AddrFrom, "block", blockHash)
+
+		newInTransit := [][]byte{}
+		for _, b := range blocksInTransit {
+			if bytes.Compare(b, blockHash) != 0 {
+				newInTransit = append(newInTransit, b)
+			}
+		}
+		blocksInTransit = newInTransit
+	}
+
+	if payload.Type == "tx" {
+		txID := payload.Items[0]
+
+		if mempool[hex.EncodeToString(txID)].ID == nil {
+			sendGetData(payload.AddrFrom, "tx", txID)
+		}
+	}
 }
