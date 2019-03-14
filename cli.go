@@ -68,6 +68,18 @@ func (cli *CLI) listAllAddrs(nodeID string) {
 	}
 }
 
+func (cli *CLI) startNode(nodeID, minerAddr string) {
+	fmt.Printf("Starting node %s\n", nodeID)
+	if len(minerAddr) > 0 {
+		if ValidateAddr(minerAddr) {
+			fmt.Println("Mining is on. Address to receive rewards:", minerAddr)
+		} else {
+			log.Panic("wrong miner address!")
+		}
+	}
+	StartServer(nodeID, minerAddr)
+}
+
 func (cli *CLI) printUsage() {
 	fmt.Println("Usage:")
 	fmt.Println(" createblockchain -address ADDRESS: Create a blockchain and send genesis block reward to ADDRESS")
@@ -77,6 +89,7 @@ func (cli *CLI) printUsage() {
 	fmt.Println("	printchain: Print all blocks of the blockchain")
 	fmt.Println(" reindexutxo: Rebuilds the UTXO set")
 	fmt.Println(" send -from FROM -to TO -amount AMOUNT: Send AMOUNT of coins from FROM address to TO")
+	fmt.Println(" startnode -miner ADDRESS: Start a node with ID specified in NODE_ID env. var. -miner enables mining")
 }
 
 func (cli *CLI) validateArgs() {
@@ -163,6 +176,7 @@ func (cli *CLI) Run() {
 	sendCmd := flag.NewFlagSet("send", flag.ExitOnError)
 	reindexUTXOCmd := flag.NewFlagSet("reindexutxo", flag.ExitOnError)
 	printChainCmd := flag.NewFlagSet("printchain", flag.ExitOnError)
+	startNodeCmd := flag.NewFlagSet("startnode", flag.ExitOnError)
 
 	getBalanceAddr := getBalanceCmd.String("address", "", "The address to get balance for")
 	createBlockchainAddr := createBlockchainCmd.String("address", "", "The address to send genesis block reward to")
@@ -170,6 +184,7 @@ func (cli *CLI) Run() {
 	sendTo := sendCmd.String("to", "", "Receiver wallet address.")
 	sendAmount := sendCmd.Int("amount", 0, "Amount to send")
 	sendMine := sendCmd.Bool("mine", false, "Mine immediately on the same node")
+	startNodeMiner := startNodeCmd.String("miner", "", "Enable mining mode and send reward to ADDRESS")
 
 	switch os.Args[1] {
 	case "getbalance":
@@ -204,6 +219,11 @@ func (cli *CLI) Run() {
 		}
 	case "send":
 		err := sendCmd.Parse(os.Args[2:])
+		if err != nil {
+			log.Panic(err)
+		}
+	case "startnode":
+		err := startNodeCmd.Parse(os.Args[2:])
 		if err != nil {
 			log.Panic(err)
 		}
@@ -250,5 +270,14 @@ func (cli *CLI) Run() {
 			os.Exit(1)
 		}
 		cli.send(*sendFrom, *sendTo, *sendAmount, nodeID, *sendMine)
+	}
+
+	if startNodeCmd.Parsed() {
+		nodeID := os.Getenv("NODE_ID")
+		if nodeID == "" {
+			startNodeCmd.Usage()
+			os.Exit(1)
+		}
+		cli.startNode(nodeID, *startNodeMiner)
 	}
 }
